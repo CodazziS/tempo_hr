@@ -11,7 +11,6 @@ import dateutil
 
 @api.model
 def _tz_get(self):
-    # put POSIX 'Etc/*' entries at the end to avoid confusing users - see bug 1086728
     return [(tz,tz) for tz in sorted(pytz.all_timezones, key=lambda tz: tz if not tz.startswith('Etc/') else '_')]
 
 @api.multi
@@ -122,44 +121,31 @@ class tempo_hr_calc(osv.osv):
                             hr_attendance.create(cr, uid, vals, context=context)
         return None
 
-    def _calc_tempo_duration(self, cr, uid, ids, field_name, arg, context):
+    def _worked_hours_compute(self, cr, uid, ids, fieldnames, args, context=None):
         res = {}
-        record = self.browse(cr, uid, ids, context=context)
-        for data in record:
-
-            if data.action == "sign_in":
-                res[data.id] = ''
-            else:
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.action == 'sign_in':
+                res[obj.id] = 0
+            elif obj.action == 'sign_out':
+                # Get the associated sign-in
                 last_signin_id = self.search(cr, uid, [
-                    ('employee_id', '=', data.employee_id.id),
-                    ('name', '<', data.name), ('action', '=', 'sign_in')
+                    ('employee_id', '=', obj.employee_id.id),
+                    ('name', '<', obj.name), ('action', '=', 'sign_in')
                 ], limit=1, order='name DESC')
-
                 if last_signin_id:
-                    last_signin = self.browse(cr, uid, last_signin_id,
-                                              context=context)[0]
-                    last_signin_time = datetime.datetime\
-                        .strptime(last_signin.name, '%Y-%m-%d %H:%M:%S')
-                    signout_time = datetime.datetime\
-                        .strptime(data.name, '%Y-%m-%d %H:%M:%S')
-                    workedhours_datetime = (signout_time - last_signin_time)
+                    last_signin = self.browse(cr, uid, last_signin_id, context=context)[0]
+                    last_signin_datetime = datetime.datetime.strptime(last_signin.name, '%Y-%m-%d %H:%M:%S')
+                    signout_datetime = datetime.datetime.strptime(obj.name, '%Y-%m-%d %H:%M:%S')
+                    workedhours_datetime = (signout_datetime - last_signin_datetime)
                     seconds = workedhours_datetime.seconds % 60
-                    if seconds < 10:
-                        seconds = "0" + str(seconds)
                     minutes = (workedhours_datetime.seconds / 60) % 60
-                    if minutes < 10:
-                        minutes = "0" + str(minutes)
                     hours = (workedhours_datetime.seconds / 60) / 60
-                    if hours < 10:
-                        hours = "0" + str(hours)
-                    res[data.id] = str(hours) + ":" + str(minutes) + ":" + str(seconds)
+                    minutes_dec = float(minutes) / 60
+                    seconds_dec = float(seconds) / 3600
+                    res[obj.id] = float(hours) + float(minutes_dec) + float(seconds_dec)
                 else:
-                    res[data.id] = ''
-
+                    res[obj.id] = False
         return res
-
     _columns = {
-        'duration': fields.function(_calc_tempo_duration,
-        string="Duration",
-        type="text")
+        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=False),
     }

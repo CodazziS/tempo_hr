@@ -34,7 +34,7 @@
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//field[@name='action']" position="after">
-                    <field name="duration" />
+                    <field name="worked_hours" />
                 </xpath>
             </data>
         </field>
