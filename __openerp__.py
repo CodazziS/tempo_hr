@@ -7,7 +7,7 @@ Tempo HR
 =========================
     """,
     'version': '0.1',
-    'depends': ['hr_attendance', 'hr', 'calendar', 'resource'],
+    'depends': ['public_holidays', 'hr_contract', 'hr_attendance', 'hr', 'calendar', 'resource', 'hr_holidays'],
     'data': [
         'static/src/xml/view.xml',
     ],

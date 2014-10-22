@@ -34,57 +34,30 @@
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//field[@name='action']" position="after">
-                    <field name="worked_hours" />
+                    <field name="worked_hours" widget="float_time" />
                 </xpath>
             </data>
         </field>
     </record>
 
-    <!-- TEST CALENDAR -->
-    <!--
-    <record model="ir.actions.act_window" id="open_ask_holidays_tempo">
-        <field name="name">Leave Request</field>
-        <field name="res_model">hr.holidays</field>
-        <field name="view_type">form</field>
-        <field name="view_id" ref="edit_holiday_new"/>
-        <field name="context">{'default_type': 'remove', 'search_default_my_leaves':1}</field>
-        <field name="domain">[('type','=','remove')]</field>
-        <field name="search_view_id" ref="view_hr_holidays_filter"/>
-        <field name="help" type="html">
-          <p class="oe_view_nocontent_create">
-            Click to create a new leave request.
-          </p><p>
-            Once you have recorded your leave request, it will be sent
-            to a manager for validation. Be sure to set the right leave
-            type (recuperation, legal holidays, sickness) and the exact
-            number of open days related to your leave.
-          </p>
-        </field>
-    </record>
-
-    <record id="view_holiday_new_calendar_tempo" model="ir.ui.view">
-        <field name="name">Leave Request</field>
-        <field name="model">hr.holidays</field>
+    <record model="ir.ui.view" id="tempo_hr_calendar">
+        <field name="name">tempo_hr.calendar</field>
+        <field name="model">hr.attendance</field>
         <field name="arch" type="xml">
-            <calendar string="Leave Request" color="employee_id"
-                      date_start="date_from" date_stop="date_to"
-                      quick_add="False" avatar_model="hr.employee">
+            <calendar color="employee_id" date_start="calendar_start" date_stop="name" string="Hours">
                 <field name="employee_id"/>
-                <field name="holiday_status_id"/>
             </calendar>
         </field>
     </record>
 
-    <record model="ir.actions.act_window.view" id="action_open_ask_holidays_calendar_tempo">
-        <field name="sequence" eval="1"/>
-        <field name="view_mode">calendar</field>
-        <field name="view_id" ref="view_holiday_new_calendar_tempo"/>
-        <field name="act_window_id" ref="open_ask_holidays_tempo"/>
+    <record id="hr_attendance.open_view_attendance" model="ir.actions.act_window">
+        <field name="name">Attendances</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="context">{"search_default_today":1, "action":"sign_out"}</field>
+        <field name="search_view_id" ref="hr_attendance.view_hr_attendance_filter" />
     </record>
 
-
-
-    <menuitem parent="menu_open_ask_holidays" id="menu_open_ask_holidays_new_tempo" action="open_ask_holidays_tempo"/>
-    -->
 </data>
 </openerp>

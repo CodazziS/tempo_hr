@@ -146,6 +146,22 @@ class tempo_hr_calc(osv.osv):
                 else:
                     res[obj.id] = False
         return res
+
+    def _calendar_start(self, cr, uid, ids, fieldnames, args, context=None):
+        res = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.action == 'sign_in':
+                res[obj.id] = None
+            elif obj.action == 'sign_out':
+                date_stop = datetime.datetime.strptime(obj.name, '%Y-%m-%d %H:%M:%S')
+                date_delay = obj.worked_hours
+                hours = int(date_delay)
+                minutes = int((float(date_delay) - float(hours)) * float(60))
+                date_start = date_stop - datetime.timedelta(hours=hours, minutes=minutes)
+                res[obj.id] = date_start
+        return res
+
     _columns = {
-        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=False),
+        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=True),
+        'calendar_start': fields.function(_calendar_start, type='datetime', string='Calendar start', store=True),
     }
