@@ -165,3 +165,78 @@ class tempo_hr_calc(osv.osv):
         'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=True),
         'calendar_start': fields.function(_calendar_start, type='datetime', string='Calendar start', store=True),
     }
+
+
+class tempo_hr_plan(osv.osv):
+    _name = "tempo_hr"
+
+    def cron_plan_tempo_hr(self, cr, uid, context=None):
+        hr_tempo = self.pool.get('tempo_hr')
+        ids = hr_tempo.search(cr, uid, [], context=context)
+        hr_tempo.unlink(cr, uid, ids, context=context)
+
+        employees = self.pool.get('hr.employee')\
+            .search(cr, uid,
+                    ['|', ('active', '=', False),
+                     ('active', '=', True)])
+        for employee in self.pool.get('hr.employee').browse(cr, uid, employees):
+            print employee.name
+            working_days = employee.contract_id\
+                .working_hours.attendance_ids
+            year_now = datetime.datetime.now().year
+            current_date = datetime.date(year_now, 1, 1)
+            date_stop = datetime.date(year_now + 1, 12, 31)
+            if employee.tz is not False:
+                tz = pytz.timezone(employee.tz)
+            else:
+                tz = pytz.utc
+            if working_days is not None:
+                while current_date <= date_stop:
+                    holidays = self.pool.get('public.holidays.holidays')\
+                        .is_holiday(cr, uid, current_date, employee=employee)
+                    if holidays is False:
+                        for day in working_days:
+                            if int(day.dayofweek) == current_date.weekday():
+                                time_in = str(day.hour_from).split('.')
+                                date_in = str(current_date) + " "
+                                date_in += str(time_in[0]) + ":"
+                                if len(str(time_in[1])) == 1:
+                                    date_in += "0" + str(time_in[1])
+                                else:
+                                    date_in += str(time_in[1])
+                                name_in = datetime.datetime\
+                                    .strptime(date_in, '%Y-%m-%d %H:%M')
+                                date_in = tz.localize(name_in, is_dst=None)
+                                dateIn = date_in.astimezone(pytz.utc)
+
+                                time_out = str(day.hour_to).split('.')
+                                date_out = str(current_date) + " "
+                                date_out += str(time_out[0]) + ":"
+                                if len(str(time_out[1])) == 1:
+                                    date_out += "0" + str(time_out[1])
+                                else:
+                                    date_out += str(time_out[1])
+                                name_out = datetime.datetime\
+                                    .strptime(date_out, '%Y-%m-%d %H:%M')
+                                date_out = tz.localize(name_out, is_dst=None)
+                                dateOut = date_out.astimezone(pytz.utc)
+
+                                print "DATe : "
+                                print dateIn
+                                print dateOut
+                                vals = {
+                                    'employee_id': employee.id,
+                                    'date_start': dateIn,
+                                    'date_stop': dateOut,
+                                }
+                                hr_tempo = self.pool.get('tempo_hr')
+                                hr_tempo.create(cr, uid, vals, context=context)
+                    current_date = current_date + datetime.timedelta(days=1)
+
+        return None
+
+    _columns = {
+        'employee_id': fields.many2one('hr.employee', "Employee", required=True),
+        'date_start': fields.datetime('Start Date', required=True),
+        'date_stop': fields.datetime('End Date', required=True),
+    }

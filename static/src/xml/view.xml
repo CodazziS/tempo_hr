@@ -2,7 +2,7 @@
 <openerp>
 
 <data>
-
+    <!-- CRONS -->
     <record id="ir_cron_personnel_actions" model="ir.cron">
         <field name="name">Run tempo_hr</field>
         <field eval="True" name="active"/>
@@ -16,17 +16,32 @@
         <field name="args">()</field>
     </record>
 
-    <record id="tempo_hr_employee" model="ir.ui.view">
-            <field name="name">tempo_hr.employee_form</field>
-            <field name="model">hr.employee</field>
-            <field name="inherit_id" ref="hr.view_employee_form"/>
-            <field name="arch" type="xml">
-                <field name="active" position="before">
-                    <field name="tz" class="oe_inline"/>
-                </field>
-            </field>
-        </record>
+    <record id="ir_cron_personnel_actions" model="ir.cron">
+        <field name="name">Run tempo_hr</field>
+        <field eval="True" name="active"/>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="model">tempo_hr</field>
+        <field name="function">cron_plan_tempo_hr</field>
+        <field name="args">()</field>
+    </record>
 
+    <!-- Employee timezone -->
+    <record id="tempo_hr_employee" model="ir.ui.view">
+        <field name="name">tempo_hr.employee_form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <field name="active" position="before">
+                <field name="tz" class="oe_inline"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Employee worked hours -->
     <record model="ir.ui.view" id="tempo_hr_tree">
         <field name="name">tempo_hr.tree</field>
         <field name="inherit_id" ref="hr_attendance.view_attendance_who"/>
@@ -40,6 +55,7 @@
         </field>
     </record>
 
+    <!-- Calendar employees -->
     <record model="ir.ui.view" id="tempo_hr_calendar">
         <field name="name">tempo_hr.calendar</field>
         <field name="model">hr.attendance</field>
@@ -49,15 +65,42 @@
             </calendar>
         </field>
     </record>
-
     <record id="hr_attendance.open_view_attendance" model="ir.actions.act_window">
         <field name="name">Attendances</field>
         <field name="res_model">hr.attendance</field>
         <field name="view_type">form</field>
         <field name="view_mode">tree,form,calendar</field>
-        <field name="context">{"search_default_today":1, "action":"sign_out"}</field>
+        <field name="context">{"action":"sign_out"}</field>
         <field name="search_view_id" ref="hr_attendance.view_hr_attendance_filter" />
     </record>
+
+    <!-- Plann Calendar employees -->
+    <record id="tempo_hr_contract_search" model="ir.ui.view">
+        <field name="name">tempo_hr.contract.search</field>
+        <field name="model">tempo_hr</field>
+        <field name="arch" type="xml">
+            <search string="Search Contract Type">
+                <field name="employee_id" string="Employee"/>
+           </search>
+        </field>
+    </record>
+    <record model="ir.ui.view" id="tempo_hr_contract_calendar">
+        <field name="name">contract_calendar</field>
+        <field name="model">tempo_hr</field>
+        <field name="arch" type="xml">
+            <calendar color="employee_id" date_start="date_start" date_stop="date_stop" string="Hours">
+                <field name="employee_id"/>
+            </calendar>
+        </field>
+    </record>
+    <record id="tempo_hr_contract_act" model="ir.actions.act_window">
+        <field name="name">Planning</field>
+        <field name="res_model">tempo_hr</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">calendar</field>
+        <field name="search_view_id" ref="tempo_hr_contract_search"/>
+    </record>
+    <menuitem action="tempo_hr_contract_act" id="tempo_hr_contract" parent="hr.menu_hr_main"/>
 
 </data>
 </openerp>
