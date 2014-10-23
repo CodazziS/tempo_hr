@@ -196,10 +196,6 @@ class tempo_hr_calc(osv.osv):
                 hours = int(date_delay)
                 minutes = int((float(date_delay) - float(hours)) * float(60))
                 date_start = date_stop - datetime.timedelta(hours=hours, minutes=minutes)
-                print "DATES ="
-                print date_start
-                print date_stop
-                print date_delay
                 res[obj.id] = date_start
         return res
 
