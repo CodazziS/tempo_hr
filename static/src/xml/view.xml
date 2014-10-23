@@ -16,8 +16,8 @@
         <field name="args">()</field>
     </record>
 
-    <record id="ir_cron_personnel_actions" model="ir.cron">
-        <field name="name">Run tempo_hr</field>
+    <record id="ir_cron_personnel_plan_actions" model="ir.cron">
+        <field name="name">Run plan_tempo_hr</field>
         <field eval="True" name="active"/>
         <field name="user_id" ref="base.user_root"/>
         <field name="interval_number">1</field>
@@ -49,7 +49,7 @@
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//field[@name='action']" position="after">
-                    <field name="worked_hours" widget="float_time" />
+                    <field name="worked_hours" widget="float_time" sum="Total" />
                 </xpath>
             </data>
         </field>
