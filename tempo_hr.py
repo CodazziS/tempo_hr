@@ -199,6 +199,14 @@ class tempo_hr_calc(osv.osv):
                 res[obj.id] = date_start
         return res
 
+    def name_get(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        res = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = str(obj.employee_id.name)
+        return res
+
     _columns = {
         'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=True),
         'calendar_start': fields.function(_calendar_start, type='datetime', string='Calendar start', store=True),
@@ -211,31 +219,31 @@ class tempo_hr_plan(osv.osv):
     def get_real_times(self, cr, uid, leaves, din, dout, tz):
         res = list()
         for l in self.pool.get('hr.holidays').browse(cr, uid, leaves):
+            if l:
+                lto = datetime.datetime\
+                    .strptime(l.date_to, '%Y-%m-%d %H:%M:%S')
+                lfrom = datetime.datetime\
+                    .strptime(l.date_from, '%Y-%m-%d %H:%M:%S')
+                hto = lto.strftime("%H.%M")
+                hfrom = lfrom.strftime("%H.%M")
 
-            lto = datetime.datetime\
-                .strptime(l.date_to, '%Y-%m-%d %H:%M:%S')
-            lfrom = datetime.datetime\
-                .strptime(l.date_from, '%Y-%m-%d %H:%M:%S')
-            hto = lto.strftime("%H.%M")
-            hfrom = lfrom.strftime("%H.%M")
+                lfrom = self.get_date(hfrom, lfrom.date(), "Etc/UTC")
+                lto = self.get_date(hto, lto.date(), "Etc/UTC")
 
-            lfrom = self.get_date(hfrom, lfrom.date(), "Etc/UTC")
-            lto = self.get_date(hto, lto.date(), "Etc/UTC")
-
-            if lfrom <= din and lto >= dout:
-                return list()
-            elif lfrom <= din and lto >= din:
-                din = lto
-            elif lfrom <= dout and lto >= dout:
-                dout = lfrom
-            elif lfrom > din and lto < dout:
-                d1 = self.get_real_times(cr, uid, leaves, din, lfrom, tz)
-                d2 = self.get_real_times(cr, uid, leaves, lto, dout, tz)
-                for d in d1:
-                    res.append(d)
-                for d in d2:
-                    res.append(d)
-                return res
+                if lfrom <= din and lto >= dout:
+                    return list()
+                elif lfrom <= din and lto >= din:
+                    din = lto
+                elif lfrom <= dout and lto >= dout:
+                    dout = lfrom
+                elif lfrom > din and lto < dout:
+                    d1 = self.get_real_times(cr, uid, leaves, din, lfrom, tz)
+                    d2 = self.get_real_times(cr, uid, leaves, lto, dout, tz)
+                    for d in d1:
+                        res.append(d)
+                    for d in d2:
+                        res.append(d)
+                    return res
         res.append([din, dout])
         return res
 
