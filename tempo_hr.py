@@ -219,7 +219,7 @@ class tempo_hr_plan(osv.osv):
     def get_real_times(self, cr, uid, leaves, din, dout, tz):
         res = list()
         for l in self.pool.get('hr.holidays').browse(cr, uid, leaves):
-            if l:
+            if l.date_to and l.date_from:
                 lto = datetime.datetime\
                     .strptime(l.date_to, '%Y-%m-%d %H:%M:%S')
                 lfrom = datetime.datetime\
