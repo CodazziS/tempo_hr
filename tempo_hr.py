@@ -199,6 +199,22 @@ class tempo_hr_calc(osv.osv):
                 res[obj.id] = date_start
         return res
 
+    def _export_date(self, cr, uid, ids, fieldnames, args, context=None):
+        res = {}
+
+        current_user = self.pool.get('res.users')\
+            .browse(cr, uid, uid, context=context)
+
+        for obj in self.browse(cr, uid, ids, context=context):
+                timeUTC = datetime\
+                    .datetime.strptime(obj.name, '%Y-%m-%d %H:%M:%S')
+                timezoneLocal = pytz.timezone(current_user.tz)
+                utc = pytz.utc
+                timeLocal = utc.localize(timeUTC).astimezone(timezoneLocal)
+
+                res[obj.id] = timeLocal
+        return res
+
     def name_get(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -207,9 +223,11 @@ class tempo_hr_calc(osv.osv):
             res[obj.id] = str(obj.employee_id.name)
         return res
 
+
     _columns = {
         'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=True),
         'calendar_start': fields.function(_calendar_start, type='datetime', string='Calendar start', store=True),
+        'export_date': fields.function(_export_date, type='datetime', string='Export date')
     }
 
 
