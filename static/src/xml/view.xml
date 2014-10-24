@@ -28,7 +28,28 @@
         <field name="function">cron_plan_tempo_hr</field>
         <field name="args">()</field>
     </record>
-
+    <!-- Form
+    <record model="ir.ui.view" id="tempo_hr_view_attendance_form">
+        <field name="name">tempo_hr.attendance_form</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_form"/>
+        <field name="model">hr.attendance</field>
+        <field name="string">test</field>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//form[@string='Employee attendances']" position="replace">
+                    <sheet>
+                    <group>
+                        <field name="employee_id"/>
+                        <field name="name"/>
+                        <field name="action"/>
+                        <field name="action_desc"/>
+                    </group>
+                    </sheet>
+                </xpath>
+            </data>
+        </field>
+    </record>
+    -->
     <!-- Employee timezone -->
     <record id="tempo_hr_employee" model="ir.ui.view">
         <field name="name">tempo_hr.employee_form</field>
