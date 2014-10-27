@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+<data>
+    <!-- Employee timezone -->
+    <record id="tempo_hr_employee" model="ir.ui.view">
+        <field name="name">tempo_hr.employee_form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <field name="active" position="before">
+                <field name="tz" class="oe_inline"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Employee worked hours -->
+    <record model="ir.ui.view" id="tempo_hr_tree">
+        <field name="name">tempo_hr.tree</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_who"/>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//field[@name='action']" position="after">
+                    <field name="worked_hours" widget="float_time" sum="Total" />
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- Employee holidays values -->
+    <record model="ir.ui.view" id="tempo_hr_holidays_tree">
+        <field name="name">tempo_hr_holidays.tree</field>
+        <field name="inherit_id" ref="hr_holidays.view_holiday"/>
+        <field name="model">hr.holidays</field>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//field[@name='number_of_days']" position="replace">
+                    <field name="number_of_days_abs" />
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+
+</data>
+</openerp>
