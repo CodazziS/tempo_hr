@@ -284,9 +284,14 @@ class tempo_hr_plan(osv.osv):
         return date
 
     def cron_plan_tempo_hr(self, cr, uid, context=None):
+        # Remove all values
         hr_tempo = self.pool.get('tempo_hr')
         ids = hr_tempo.search(cr, uid, [], context=context)
         hr_tempo.unlink(cr, uid, ids, context=context)
+
+        hr_tempo_summary = self.pool.get('tempo_hr_summary')
+        ids = hr_tempo_summary.search(cr, uid, [], context=context)
+        hr_tempo_summary.unlink(cr, uid, ids, context=context)
 
         employees = self.pool.get('hr.employee')\
             .search(cr, uid,
@@ -320,13 +325,45 @@ class tempo_hr_plan(osv.osv):
                                         date_in, date_out, employee.tz)
 
                                 for t in real_worked_time:
+                                    wd = (t[1] - t[0])
+                                    seconds = wd.seconds % 60
+                                    minutes = (wd.seconds / 60) % 60
+                                    hours = (wd.seconds / 60) / 60
+                                    min_dec = float(minutes) / 60
+                                    sec_dec = float(seconds) / 3600
+                                    planned_hours = float(hours)\
+                                        + float(min_dec)\
+                                        + float(sec_dec)
                                     vals = {
                                         'employee_id': employee.id,
                                         'date_start': t[0],
                                         'date_stop': t[1],
+                                        'date': t[0].date(),
                                     }
                                     hr_tempo = self.pool.get('tempo_hr')
                                     hr_tempo.create(cr, uid, vals, context=context)
+
+                                    #Add summary
+                                    current_summary = self.pool.get('tempo_hr_summary')
+                                    search = ['&',
+                                             ['employee_id', '=', employee.id],
+                                             ['date', '=', t[0].date()]]
+                                    ids = current_summary\
+                                        .search(cr, uid, search,
+                                                context=context)
+
+                                    if ids:
+                                        for plan in self.pool.get('tempo_hr_summary').browse(cr, uid, ids):
+                                            plan.planned_hours += planned_hours
+                                    else:
+                                        vals_sum = {
+                                            'employee_id': employee.id,
+                                            'date': t[0].date(),
+                                            'planned_hours': planned_hours,
+                                        }
+                                        hr_tempo_summary = self.pool.get('tempo_hr_summary')
+                                        hr_tempo_summary.create(cr, uid, vals_sum, context=context)
+
                     current_date = current_date + datetime.timedelta(days=1)
         return None
 
@@ -334,4 +371,67 @@ class tempo_hr_plan(osv.osv):
         'employee_id': fields.many2one('hr.employee', "Employee", required=True),
         'date_start': fields.datetime('Start Date', required=True),
         'date_stop': fields.datetime('End Date', required=True),
+        'date': fields.date('Date', required=True),
+    }
+
+
+class tempo_hr_summary(osv.osv):
+    _name = "tempo_hr_summary"
+
+    def calc_worked_hours(self, cr, uid, obj, context=None):
+        dates = self.pool.get('hr.attendance')
+        last_signin_id = dates.search(cr, uid, [
+            ('employee_id', '=', obj.employee_id.id),
+            ('name', '<', obj.name), ('action', '=', 'sign_in')
+        ], limit=1, order='name DESC')
+        if last_signin_id:
+            last_signin = self.pool.get('hr.attendance')\
+                .browse(cr, uid, last_signin_id, context=context)[0]
+            last_signin_datetime = datetime.datetime.strptime(last_signin.name, '%Y-%m-%d %H:%M:%S')
+            signout_datetime = datetime.datetime.strptime(obj.name, '%Y-%m-%d %H:%M:%S')
+            workedhours_datetime = (signout_datetime - last_signin_datetime)
+            seconds = workedhours_datetime.seconds % 60
+            minutes = (workedhours_datetime.seconds / 60) % 60
+            hours = (workedhours_datetime.seconds / 60) / 60
+            minutes_dec = float(minutes) / 60
+            seconds_dec = float(seconds) / 3600
+            res = float(hours) + float(minutes_dec) + float(seconds_dec)
+        else:
+            res = False
+        return res
+
+    def _worked_hours_compute(self, cr, uid, ids, fieldnames, args, context=None):
+        res = {}
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            dates = self.pool.get('hr.attendance')
+            date = datetime.datetime.strptime(obj.date, '%Y-%m-%d')
+            date2 = date + datetime.timedelta(days=1)
+            search = ['&',
+                     ['employee_id', '=', obj.employee_id.id],
+                     ['name', '>=', str(date)],
+                     ['name', '<', str(date2)]]
+            ids = dates.search(cr, uid, search, context=context)
+            hours = 0
+            for attend in self.pool.get('hr.attendance').browse(cr, uid, ids):
+                if attend.action == 'sign_in':
+                    hours += 0
+                elif attend.action == 'sign_out':
+                    hours += self.calc_worked_hours(cr, uid,
+                                                    attend, context=context)
+            res[obj.id] = hours
+        return res
+
+    def _diff_hours_compute(self, cr, uid, ids, fieldnames, args, context=None):
+        res = {}
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = obj.worked_hours - obj.planned_hours
+        return res
+    _columns = {
+        'employee_id': fields.many2one('hr.employee', "Employee", required=True),
+        'date': fields.date('Date', required=True),
+        'planned_hours': fields.float('Planned hours', required=True),
+        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=True),
+        'diff_hours': fields.function(_diff_hours_compute, type='float', string='Diff Hours', store=True),
     }

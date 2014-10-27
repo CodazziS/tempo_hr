@@ -122,6 +122,45 @@
         <field name="search_view_id" ref="tempo_hr_contract_search"/>
     </record>
     <menuitem action="tempo_hr_contract_act" id="tempo_hr_contract" parent="hr.menu_hr_main"/>
-
+    <!-- Summary Calendar employees -->
+    <record id="tempo_hr_summary_search" model="ir.ui.view">
+        <field name="name">tempo_hr.summary.search</field>
+        <field name="model">tempo_hr</field>
+        <field name="arch" type="xml">
+            <search string="Search Summary Contract Type">
+                <filter string="Current Month" name="month"
+                        domain="[
+                        ('date','&gt;=', datetime.datetime.now().strftime('%Y-%m-01')),
+                        ('date','&lt;', datetime.datetime.now().strftime('%Y-%m-31'))
+                        ]" />
+                <group expand="0" string="Group By">
+                    <filter name="group_date" string="Month" context="{'group_by':'date:month'}"/>
+                    <filter name="group_date" string="Weeks" context="{'group_by':'date:week'}"/>
+                </group>
+           </search>
+        </field>
+    </record>
+    <record model="ir.ui.view" id="tempo_hr_summary_graph">
+        <field name="name">summary_graph</field>
+        <field name="model">tempo_hr_summary</field>
+        <field name="type">graph</field>
+        <field name="arch" type="xml">
+             <graph string="Planning" type="pivot">
+                  <field name="employee_id" group="True"/>
+                  <field name="planned_hours" type="measure"/>
+                  <field name="worked_hours" type="measure"/>
+                  <field name="diff_hours" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <record id="tempo_hr_summary_act" model="ir.actions.act_window">
+        <field name="name">Summary</field>
+        <field name="res_model">tempo_hr_summary</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">graph</field>
+        <field name="context">{"search_default_month":1}</field>
+        <field name="search_view_id" ref="tempo_hr_summary_search"/>
+    </record>
+    <menuitem action="tempo_hr_summary_act" id="tempo_hr_summary" parent="hr.menu_hr_main"/>
 </data>
 </openerp>
