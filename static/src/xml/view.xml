@@ -74,7 +74,7 @@
         <field name="view_mode">calendar</field>
         <field name="search_view_id" ref="tempo_hr_contract_search"/>
     </record>
-    <menuitem action="tempo_hr_contract_act" id="tempo_hr_contract" parent="hr.menu_hr_main"/>
+    <menuitem action="tempo_hr_contract_act" id="tempo_hr_contract" parent="hr_attendance.menu_hr_attendance" sequence="21" />
 
     <!-- Summary Calendar employees -->
     <record id="tempo_hr_summary_search" model="ir.ui.view">
@@ -115,6 +115,7 @@
         <field name="context">{"search_default_month":1}</field>
         <field name="search_view_id" ref="tempo_hr_summary_search"/>
     </record>
-    <menuitem action="tempo_hr_summary_act" id="tempo_hr_summary" parent="hr.menu_hr_main"/>
+    <menuitem action="tempo_hr_summary_act" id="tempo_hr_summary" parent="hr_attendance.menu_hr_attendance" sequence="22"/>
 </data>
 </openerp>
+
