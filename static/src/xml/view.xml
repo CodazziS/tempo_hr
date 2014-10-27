@@ -28,53 +28,6 @@
         <field name="function">cron_plan_tempo_hr</field>
         <field name="args">()</field>
     </record>
-    <!-- Form
-    <record model="ir.ui.view" id="tempo_hr_view_attendance_form">
-        <field name="name">tempo_hr.attendance_form</field>
-        <field name="inherit_id" ref="hr_attendance.view_attendance_form"/>
-        <field name="model">hr.attendance</field>
-        <field name="string">test</field>
-        <field name="arch" type="xml">
-            <data>
-                <xpath expr="//form[@string='Employee attendances']" position="replace">
-                    <sheet>
-                    <group>
-                        <field name="employee_id"/>
-                        <field name="name"/>
-                        <field name="action"/>
-                        <field name="action_desc"/>
-                    </group>
-                    </sheet>
-                </xpath>
-            </data>
-        </field>
-    </record>
-    -->
-    <!-- Employee timezone -->
-    <record id="tempo_hr_employee" model="ir.ui.view">
-        <field name="name">tempo_hr.employee_form</field>
-        <field name="model">hr.employee</field>
-        <field name="inherit_id" ref="hr.view_employee_form"/>
-        <field name="arch" type="xml">
-            <field name="active" position="before">
-                <field name="tz" class="oe_inline"/>
-            </field>
-        </field>
-    </record>
-
-    <!-- Employee worked hours -->
-    <record model="ir.ui.view" id="tempo_hr_tree">
-        <field name="name">tempo_hr.tree</field>
-        <field name="inherit_id" ref="hr_attendance.view_attendance_who"/>
-        <field name="model">hr.attendance</field>
-        <field name="arch" type="xml">
-            <data>
-                <xpath expr="//field[@name='action']" position="after">
-                    <field name="worked_hours" widget="float_time" sum="Total" />
-                </xpath>
-            </data>
-        </field>
-    </record>
 
     <!-- Calendar employees -->
     <record model="ir.ui.view" id="tempo_hr_calendar">
@@ -122,6 +75,7 @@
         <field name="search_view_id" ref="tempo_hr_contract_search"/>
     </record>
     <menuitem action="tempo_hr_contract_act" id="tempo_hr_contract" parent="hr.menu_hr_main"/>
+
     <!-- Summary Calendar employees -->
     <record id="tempo_hr_summary_search" model="ir.ui.view">
         <field name="name">tempo_hr.summary.search</field>

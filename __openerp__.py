@@ -10,5 +10,6 @@ Tempo HR
     'depends': ['public_holidays', 'hr_contract', 'hr_attendance', 'hr', 'calendar', 'resource', 'hr_holidays'],
     'data': [
         'static/src/xml/view.xml',
+        'static/src/xml/edit.xml',
     ],
 }

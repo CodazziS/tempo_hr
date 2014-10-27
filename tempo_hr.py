@@ -44,6 +44,21 @@ class tempo_hr_time(osv.osv):
     }
 
 
+class tempo_hr_holidays(osv.osv):
+    _name = "hr.holidays"
+    _inherit = 'hr.holidays'
+
+    def _compute_number_of_days_abs(self, cr, uid, ids, name, args, context=None):
+        result = {}
+        for hol in self.browse(cr, uid, ids, context=context):
+            result[hol.id] = hol.number_of_days_temp
+        return result
+
+    _columns = {
+        'number_of_days_abs': fields.function(_compute_number_of_days_abs, string='Number of Days', store=True),
+    }
+
+
 class tempo_hr_calc(osv.osv):
     _name = "hr.attendance"
     _inherit = 'hr.attendance'
