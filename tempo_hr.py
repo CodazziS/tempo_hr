@@ -66,31 +66,31 @@ class tempo_hr_calc(osv.osv):
     def get_real_times(self, cr, uid, leaves, din, dout, tz):
         res = list()
         for l in self.pool.get('hr.holidays').browse(cr, uid, leaves):
+            if l.date_to and l.date_from:
+                lto = datetime.datetime\
+                    .strptime(l.date_to, '%Y-%m-%d %H:%M:%S')
+                lfrom = datetime.datetime\
+                    .strptime(l.date_from, '%Y-%m-%d %H:%M:%S')
+                hto = lto.strftime("%H.%M")
+                hfrom = lfrom.strftime("%H.%M")
 
-            lto = datetime.datetime\
-                .strptime(l.date_to, '%Y-%m-%d %H:%M:%S')
-            lfrom = datetime.datetime\
-                .strptime(l.date_from, '%Y-%m-%d %H:%M:%S')
-            hto = lto.strftime("%H.%M")
-            hfrom = lfrom.strftime("%H.%M")
-
-            lfrom = self.get_date(hfrom, lfrom.date(), "Etc/UTC")
-            lto = self.get_date(hto, lto.date(), "Etc/UTC")
-
-            if lfrom <= din and lto >= dout:
-                return list()
-            elif lfrom <= din and lto >= din:
-                din = lto
-            elif lfrom <= dout and lto >= dout:
-                dout = lfrom
-            elif lfrom > din and lto < dout:
-                d1 = self.get_real_times(cr, uid, leaves, din, lfrom, tz)
-                d2 = self.get_real_times(cr, uid, leaves, lto, dout, tz)
-                for d in d1:
-                    res.append(d)
-                for d in d2:
-                    res.append(d)
-                return res
+                lfrom = self.get_date(hfrom, lfrom.date(), "Etc/UTC")
+                lto = self.get_date(hto, lto.date(), "Etc/UTC")
+    
+                if lfrom <= din and lto >= dout:
+                    return list()
+                elif lfrom <= din and lto >= din:
+                    din = lto
+                elif lfrom <= dout and lto >= dout:
+                    dout = lfrom
+                elif lfrom > din and lto < dout:
+                    d1 = self.get_real_times(cr, uid, leaves, din, lfrom, tz)
+                    d2 = self.get_real_times(cr, uid, leaves, lto, dout, tz)
+                    for d in d1:
+                        res.append(d)
+                    for d in d2:
+                        res.append(d)
+                    return res
         res.append([din, dout])
         return res
 
@@ -240,7 +240,7 @@ class tempo_hr_calc(osv.osv):
 
 
     _columns = {
-        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=True),
+        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Heures travaillees', store=True),
         'calendar_start': fields.function(_calendar_start, type='datetime', string='Calendar start', store=True),
         'export_date': fields.function(_export_date, type='datetime', string='Export date')
     }
@@ -446,7 +446,7 @@ class tempo_hr_summary(osv.osv):
     _columns = {
         'employee_id': fields.many2one('hr.employee', "Employee", required=True),
         'date': fields.date('Date', required=True),
-        'planned_hours': fields.float('Planned hours', required=True),
-        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Worked Hours', store=True),
-        'diff_hours': fields.function(_diff_hours_compute, type='float', string='Diff Hours', store=True),
+        'planned_hours': fields.float('Heures planifiees', required=True),
+        'worked_hours': fields.function(_worked_hours_compute, type='float', string='Heures travaillees', store=True),
+        'diff_hours': fields.function(_diff_hours_compute, type='float', string="Differences d'heures", store=True),
     }
