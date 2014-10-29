@@ -32,6 +32,7 @@ class tempo_hr_time(osv.osv):
             help="The partner's timezone, used to output proper date and time values inside printed reports. "
             "It is important to set a value for this field. You should use the same timezone "
             "that is otherwise used to pick and render date and time values: your computer's timezone."),
+        'freetime': fields.integer('Free minute by days'),
         'tz_offset': fields.function(_get_tz_offset,
                                      type='char',
                                      size=5,
@@ -76,7 +77,7 @@ class tempo_hr_calc(osv.osv):
 
                 lfrom = self.get_date(hfrom, lfrom.date(), "Etc/UTC")
                 lto = self.get_date(hto, lto.date(), "Etc/UTC")
-    
+
                 if lfrom <= din and lto >= dout:
                     return list()
                 elif lfrom <= din and lto >= din:
@@ -308,6 +309,8 @@ class tempo_hr_plan(osv.osv):
         ids = hr_tempo_summary.search(cr, uid, [], context=context)
         hr_tempo_summary.unlink(cr, uid, ids, context=context)
 
+        date_today = datetime.date.today()
+
         employees = self.pool.get('hr.employee')\
             .search(cr, uid,
                     ['|', ('active', '=', False),
@@ -359,25 +362,26 @@ class tempo_hr_plan(osv.osv):
                                     hr_tempo.create(cr, uid, vals, context=context)
 
                                     #Add summary
-                                    current_summary = self.pool.get('tempo_hr_summary')
-                                    search = ['&',
-                                             ['employee_id', '=', employee.id],
-                                             ['date', '=', t[0].date()]]
-                                    ids = current_summary\
-                                        .search(cr, uid, search,
-                                                context=context)
+                                    if t[0].date() <= date_today:
+                                        current_summary = self.pool.get('tempo_hr_summary')
+                                        search = ['&',
+                                                 ['employee_id', '=', employee.id],
+                                                 ['date', '=', t[0].date()]]
+                                        ids = current_summary\
+                                            .search(cr, uid, search,
+                                                    context=context)
 
-                                    if ids:
-                                        for plan in self.pool.get('tempo_hr_summary').browse(cr, uid, ids):
-                                            plan.planned_hours += planned_hours
-                                    else:
-                                        vals_sum = {
-                                            'employee_id': employee.id,
-                                            'date': t[0].date(),
-                                            'planned_hours': planned_hours,
-                                        }
-                                        hr_tempo_summary = self.pool.get('tempo_hr_summary')
-                                        hr_tempo_summary.create(cr, uid, vals_sum, context=context)
+                                        if ids:
+                                            for plan in self.pool.get('tempo_hr_summary').browse(cr, uid, ids):
+                                                plan.planned_hours += planned_hours
+                                        else:
+                                            vals_sum = {
+                                                'employee_id': employee.id,
+                                                'date': t[0].date(),
+                                                'planned_hours': planned_hours,
+                                            }
+                                            hr_tempo_summary = self.pool.get('tempo_hr_summary')
+                                            hr_tempo_summary.create(cr, uid, vals_sum, context=context)
 
                     current_date = current_date + datetime.timedelta(days=1)
         return None
@@ -405,12 +409,7 @@ class tempo_hr_summary(osv.osv):
             last_signin_datetime = datetime.datetime.strptime(last_signin.name, '%Y-%m-%d %H:%M:%S')
             signout_datetime = datetime.datetime.strptime(obj.name, '%Y-%m-%d %H:%M:%S')
             workedhours_datetime = (signout_datetime - last_signin_datetime)
-            seconds = workedhours_datetime.seconds % 60
-            minutes = (workedhours_datetime.seconds / 60) % 60
-            hours = (workedhours_datetime.seconds / 60) / 60
-            minutes_dec = float(minutes) / 60
-            seconds_dec = float(seconds) / 3600
-            res = float(hours) + float(minutes_dec) + float(seconds_dec)
+            res = workedhours_datetime.seconds
         else:
             res = False
         return res
@@ -427,26 +426,39 @@ class tempo_hr_summary(osv.osv):
                      ['name', '>=', str(date)],
                      ['name', '<', str(date2)]]
             ids = dates.search(cr, uid, search, context=context)
-            hours = 0
+            seconds = 0
+
             for attend in self.pool.get('hr.attendance').browse(cr, uid, ids):
                 if attend.action == 'sign_in':
-                    hours += 0
+                    seconds += 0
                 elif attend.action == 'sign_out':
-                    hours += self.calc_worked_hours(cr, uid,
-                                                    attend, context=context)
-            res[obj.id] = hours
+                    seconds += self.calc_worked_hours(cr, uid,
+                                                attend, context=context)
+
+            if seconds != 0:
+                seconds += obj.employee_id.freetime * 60
+            minutes = (seconds / 60) % 60
+            hours = seconds / 3600
+            seconds_real = seconds % 60
+            minutes_dec = minutes / 60.0
+            seconds_dec = seconds_real / 3600.0
+            res[obj.id] = float(hours) + float(minutes_dec) + float(seconds_dec)
         return res
 
     def _diff_hours_compute(self, cr, uid, ids, fieldnames, args, context=None):
         res = {}
-
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = obj.worked_hours - obj.planned_hours
         return res
+
+    def _get_update_ids(self, cr, uid, ids, context=None):
+        return ids
+
     _columns = {
         'employee_id': fields.many2one('hr.employee', "Employee", required=True),
         'date': fields.date('Date', required=True),
         'planned_hours': fields.float('Heures planifiees', required=True),
         'worked_hours': fields.function(_worked_hours_compute, type='float', string='Heures travaillees', store=True),
-        'diff_hours': fields.function(_diff_hours_compute, type='float', string="Differences d'heures", store=True),
+        'diff_hours': fields.function(_diff_hours_compute, type='float', string="Differences d'heures",
+                                      store={'tempo_hr_summary': (_get_update_ids, ['worked_hours', 'planned_hours'], 10)}),
     }
