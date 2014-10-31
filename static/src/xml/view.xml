@@ -29,25 +29,6 @@
         <field name="args">()</field>
     </record>
 
-    <!-- Calendar employees -->
-    <record model="ir.ui.view" id="tempo_hr_calendar">
-        <field name="name">tempo_hr.calendar</field>
-        <field name="model">hr.attendance</field>
-        <field name="arch" type="xml">
-            <calendar color="employee_id" date_start="calendar_start" date_stop="name" string="Hours">
-                <field name="employee_id"/>
-            </calendar>
-        </field>
-    </record>
-    <record id="hr_attendance.open_view_attendance" model="ir.actions.act_window">
-        <field name="name">Attendances</field>
-        <field name="res_model">hr.attendance</field>
-        <field name="view_type">form</field>
-        <field name="view_mode">tree,form,calendar</field>
-        <field name="context">{"action":"sign_out"}</field>
-        <field name="search_view_id" ref="hr_attendance.view_hr_attendance_filter" />
-    </record>
-
     <!-- Plann Calendar employees -->
     <record id="tempo_hr_contract_search" model="ir.ui.view">
         <field name="name">tempo_hr.contract.search</field>
@@ -67,11 +48,22 @@
             </calendar>
         </field>
     </record>
+    <record model="ir.ui.view" id="tempo_hr_contract_gantt">
+        <field name="name">contract_gantt</field>
+        <field name="model">tempo_hr</field>
+        <field name="arch" type="xml">
+            <gantt color="employee_id" date_stop="date_stop" date_start="date_start" string="Hours">
+                <level object="date" domain="[]">
+                    <field name="date"/>
+                </level>
+            </gantt>
+        </field>
+    </record>
     <record id="tempo_hr_contract_act" model="ir.actions.act_window">
         <field name="name">Planning</field>
         <field name="res_model">tempo_hr</field>
         <field name="view_type">form</field>
-        <field name="view_mode">calendar</field>
+        <field name="view_mode">calendar,gantt</field>
         <field name="search_view_id" ref="tempo_hr_contract_search"/>
     </record>
     <menuitem action="tempo_hr_contract_act" id="tempo_hr_contract" parent="hr_attendance.menu_hr_attendance" sequence="21" />
@@ -79,7 +71,7 @@
     <!-- Summary Calendar employees -->
     <record id="tempo_hr_summary_search" model="ir.ui.view">
         <field name="name">tempo_hr.summary.search</field>
-        <field name="model">tempo_hr</field>
+        <field name="model">tempo_hr_summary</field>
         <field name="arch" type="xml">
             <search string="Search Summary Contract Type">
                 <filter string="Current Month" name="month"

@@ -10,22 +10,46 @@
         <field name="arch" type="xml">
             <field name="active" position="before">
                 <field name="tz" class="oe_inline"/>
+                <field name="freetime" class="oe_inline"/>
             </field>
         </field>
     </record>
 
     <!-- Employee worked hours -->
+    <!-- Calendar employees -->
+    <record model="ir.ui.view" id="tempo_hr_calendar">
+        <field name="name">tempo_hr.calendar</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <calendar color="employee_id" date_start="calendar_start" date_stop="name" string="Hours">
+                <field name="employee_id"/>
+            </calendar>
+        </field>
+    </record>
     <record model="ir.ui.view" id="tempo_hr_tree">
         <field name="name">tempo_hr.tree</field>
         <field name="inherit_id" ref="hr_attendance.view_attendance_who"/>
         <field name="model">hr.attendance</field>
         <field name="arch" type="xml">
             <data>
-                <xpath expr="//field[@name='action']" position="after">
-                    <field name="worked_hours" widget="float_time" sum="Total" />
+                <xpath expr="//tree[@string='Employee attendances']" position="replace">
+                    <tree string="Employee attendances">
+                        <field name="employee_id"/>
+                        <field name="calendar_start" string="Sign in"/>
+                        <field name="name" string="Sign out"/>
+                        <field name="worked_hours" widget="float_time" sum="Total" />
+                    </tree>
                 </xpath>
             </data>
         </field>
+    </record>
+    <record id="open_view_attendance" model="ir.actions.act_window">
+        <field name="name">Attendances</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="context">{"search_default_action":"sign_out"}</field>
+        <field name="search_view_id" ref="hr_attendance.view_hr_attendance_filter" />
     </record>
 
     <!-- Employee holidays values -->
