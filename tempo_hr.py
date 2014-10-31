@@ -325,7 +325,7 @@ class tempo_hr_plan(osv.osv):
             if working_days is not None:
                 while current_date <= date_stop:
                     holidays = self.pool.get('public.holidays.holidays')\
-                        .is_holiday(cr, uid, current_date, employee=employee)
+                        .is_holiday(cr, uid, current_date)
                     if holidays is False:
                         for day in working_days:
                             if int(day.dayofweek) == current_date.weekday():
